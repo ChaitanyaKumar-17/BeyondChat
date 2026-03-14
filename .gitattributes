@@ -1,0 +1,13 @@
+# Handle line endings automatically for text files
+# (Git will decide based on the user's OS)
+* text=auto
+
+# Explicitly set the wrapper scripts
+/mvnw text eol=lf
+*.cmd text eol=crlf
+
+# Ensure Java and XML files are handled as text
+*.java    text
+*.xml     text
+*.yaml    text
+*.yml     text
