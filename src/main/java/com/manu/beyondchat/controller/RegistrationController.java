@@ -25,7 +25,7 @@ public class RegistrationController {
     @PostMapping
     public ResponseEntity<String> register(@RequestBody @Valid UserRegistrationDto userDto){
         userService.createUser(userDto);
-        return new ResponseEntity("User Created Succesfully",HttpStatus.CREATED);
+        return new ResponseEntity<>("User Created Succesfully",HttpStatus.CREATED);
     }
 
     @PostMapping("/step1")
@@ -44,5 +44,17 @@ public class RegistrationController {
     public ResponseEntity<Void> resendOtp(@RequestBody ResendOtpRequest request) {
         registrationService.resendOtp(request);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/step3")
+    public ResponseEntity<Void> step3Details(@RequestBody Step3Request request){
+        registrationService.processStep3(request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/final")
+    public ResponseEntity<Void> completeRegistration(@RequestBody Step4Request request) {
+        registrationService.processStep4AndComplete(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

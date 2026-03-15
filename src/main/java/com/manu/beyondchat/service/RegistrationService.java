@@ -1,14 +1,23 @@
 package com.manu.beyondchat.service;
 
 import com.manu.beyondchat.dto.*;
+import com.manu.beyondchat.mapper.UserMapper;
+import com.manu.beyondchat.sql.entity.UserEntity;
 import com.manu.beyondchat.sql.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -16,11 +25,20 @@ public class RegistrationService {
 
     private final UserRepository userRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
     private EmailService emailService;
     @Autowired
     private OtpService otpService;
+    @Autowired
+    private UserMapper userMapper;
+    @Autowired
+    private UserRegistrationDto dto;
+
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{12,}$"
+    );
 
     public Step1Response processStep1(Step1Request request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -123,4 +141,94 @@ public class RegistrationService {
         emailService.sendEmail(context.getEmail(), "Your One-Time Password (OTP)",message);
     }
 
+    public void processStep3(Step3Request request){
+        String redisKey = "registration:" + request.registrationId();
+        RegistrationContext context = (RegistrationContext) redisTemplate.opsForValue().get(redisKey);
+
+        if (context == null) {
+            throw new IllegalStateException("Registration session expired. Please start over.");
+        }
+        if (context.getCurrentStep() < 2) {
+            throw new IllegalStateException("You must verify your OTP before proceeding.");
+        }
+
+        if (request.firstName() == null || request.firstName().trim().isEmpty()) {
+            throw new IllegalArgumentException("First name is required.");
+        }
+        if (request.contactNumber() == null || !request.contactNumber().matches("\\d+")) {
+            throw new IllegalArgumentException("Invalid contact number. Digits only.");
+        }
+        if (request.countryCode() == null || request.countryCode().trim().isEmpty()) {
+            throw new IllegalArgumentException("Country code is required.");
+        }
+
+        if (userRepository.existsByCountryCodeAndContactNumber(request.countryCode(), request.contactNumber())) {
+            throw new IllegalArgumentException("This phone number is already registered to another account.");
+        }
+
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            LocalDate parsedDate = LocalDate.parse(request.dateOfBirth(), formatter);
+            if (parsedDate.isAfter(LocalDate.now())) {
+                throw new IllegalArgumentException("Date of birth cannot be in the future.");
+            }
+        } catch (DateTimeParseException | NullPointerException e) {
+            throw new IllegalArgumentException("Invalid date of birth format. Must be dd-mm-yyyy.");
+        }
+
+        context.setFirstName(request.firstName().trim());
+        context.setLastName(request.lastName() != null ? request.lastName().trim() : null);
+        context.setCountryCode(request.countryCode());
+        context.setContactNumber(request.contactNumber());
+        context.setDateOfBirth(request.dateOfBirth());
+
+        context.setCurrentStep(3);
+
+        // 5. Save back to Redis
+        redisTemplate.opsForValue().set(redisKey, context, Duration.ofMinutes(60));
+    }
+
+    @Transactional
+    public void processStep4AndComplete(Step4Request request){
+        String redisKey = "registration:" + request.registrationId();
+        RegistrationContext context = (RegistrationContext) redisTemplate.opsForValue().get(redisKey);
+
+        if (context == null) {
+            throw new IllegalStateException("Registration session expired. Please start over.");
+        }
+        if (context.getCurrentStep() < 3) {
+            throw new IllegalStateException("You must complete previous steps before finalizing.");
+        }
+
+        if (request.username() == null || request.username().length() < 8) {
+            throw new IllegalArgumentException("Username must be at least 8 characters long.");
+        }
+        if (userRepository.existsByUsername(request.username())) {
+            throw new IllegalArgumentException("Username is already taken.");
+        }
+
+        if (request.password() == null || !PASSWORD_PATTERN.matcher(request.password()).matches()) {
+            throw new IllegalArgumentException(
+                    "Password must be at least 12 characters and contain an uppercase letter, " +
+                            "lowercase letter, number, and special character."
+            );
+        }
+
+        String hashedPassword = passwordEncoder.encode(request.password());
+
+        dto.setFirstName(context.getFirstName());
+        dto.setLastName(context.getLastName());
+        dto.setDateOfBirth(LocalDate.parse(context.getDateOfBirth()));
+        dto.setDateOfJoining(LocalDate.from(LocalDateTime.now()));
+        dto.setEmail(context.getEmail());
+        dto.setPhoneNumber(context.getContactNumber());
+        dto.setUsername(request.username());
+        dto.setPassword(request.password());
+        dto.setStatus("ONLINE");
+
+        UserEntity user = userMapper.toEntity(dto);
+        userRepository.save(user);
+
+        redisTemplate.delete(redisKey);
+    }
 }

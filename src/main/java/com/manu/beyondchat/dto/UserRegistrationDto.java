@@ -37,9 +37,15 @@ public class UserRegistrationDto {
     @NotNull
     private LocalDate dateOfBirth;
 
+    @NotNull
+    private LocalDate dateOfJoining;
+
     @NotBlank
     @Size(max = 15)
     private String phoneNumber;
+
+    @NotBlank
+    private String status;
 
 
 }
