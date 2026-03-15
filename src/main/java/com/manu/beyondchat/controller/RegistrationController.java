@@ -13,20 +13,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/registration")
+@RequestMapping("/api/registration")
 public class RegistrationController {
 
-    @Autowired
-    private UserService userService;
+//    @Autowired
+//    private UserService userService;
 
     @Autowired
     private RegistrationService registrationService;
 
-    @PostMapping
-    public ResponseEntity<String> register(@RequestBody @Valid UserRegistrationDto userDto){
-        userService.createUser(userDto);
-        return new ResponseEntity<>("User Created Succesfully",HttpStatus.CREATED);
-    }
+//    @PostMapping
+//    public ResponseEntity<String> register(@RequestBody @Valid UserRegistrationDto userDto){
+//        userService.createUser(userDto);
+//        return new ResponseEntity<>("User Created Succesfully",HttpStatus.CREATED);
+//    }
 
     @PostMapping("/step1")
     public ResponseEntity<Step1Response> step1(@RequestBody Step1Request request) {

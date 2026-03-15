@@ -33,8 +33,8 @@ public class RegistrationService {
     private OtpService otpService;
     @Autowired
     private UserMapper userMapper;
-    @Autowired
-    private UserRegistrationDto dto;
+
+    private UserRegistrationDto dto = new UserRegistrationDto();
 
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{12,}$"
@@ -162,7 +162,7 @@ public class RegistrationService {
             throw new IllegalArgumentException("Country code is required.");
         }
 
-        if (userRepository.existsByCountryCodeAndContactNumber(request.countryCode(), request.contactNumber())) {
+        if (userRepository.existsByCountryCodeAndPhoneNumber(request.countryCode(), request.contactNumber())) {
             throw new IllegalArgumentException("This phone number is already registered to another account.");
         }
 
@@ -221,6 +221,7 @@ public class RegistrationService {
         dto.setDateOfBirth(LocalDate.parse(context.getDateOfBirth()));
         dto.setDateOfJoining(LocalDate.from(LocalDateTime.now()));
         dto.setEmail(context.getEmail());
+        dto.setCountryCode(context.getCountryCode());
         dto.setPhoneNumber(context.getContactNumber());
         dto.setUsername(request.username());
         dto.setPassword(request.password());

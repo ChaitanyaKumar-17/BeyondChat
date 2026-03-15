@@ -41,6 +41,9 @@ public class UserRegistrationDto {
     private LocalDate dateOfJoining;
 
     @NotBlank
+    private String countryCode;
+
+    @NotBlank
     @Size(max = 15)
     private String phoneNumber;
 

@@ -51,6 +51,9 @@ public class UserEntity {
     private String phoneNumber;
 
     @Column(nullable = false)
+    private String countryCode;
+
+    @Column(nullable = false)
     private LocalDate dateOfJoining;
 
     @Enumerated(EnumType.STRING)
