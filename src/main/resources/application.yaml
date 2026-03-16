@@ -24,6 +24,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    show-sql: true
 
   mail:
     host: ${MAIL_HOST}

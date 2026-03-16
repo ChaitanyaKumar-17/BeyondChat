@@ -218,13 +218,16 @@ public class RegistrationService {
 
         dto.setFirstName(context.getFirstName());
         dto.setLastName(context.getLastName());
-        dto.setDateOfBirth(LocalDate.parse(context.getDateOfBirth()));
-        dto.setDateOfJoining(LocalDate.from(LocalDateTime.now()));
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        dto.setDateOfBirth(LocalDate.parse(context.getDateOfBirth(), formatter));
+
+        dto.setDateOfJoining(LocalDate.now());
         dto.setEmail(context.getEmail());
         dto.setCountryCode(context.getCountryCode());
         dto.setPhoneNumber(context.getContactNumber());
         dto.setUsername(request.username());
-        dto.setPassword(request.password());
+        dto.setPassword(hashedPassword);
         dto.setStatus("ONLINE");
 
         UserEntity user = userMapper.toEntity(dto);
