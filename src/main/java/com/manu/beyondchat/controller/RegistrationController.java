@@ -2,8 +2,6 @@ package com.manu.beyondchat.controller;
 
 import com.manu.beyondchat.dto.*;
 import com.manu.beyondchat.service.RegistrationService;
-import com.manu.beyondchat.service.UserService;
-import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/registration")
 public class RegistrationController {
 
-//    @Autowired
-//    private UserService userService;
-
     @Autowired
     private RegistrationService registrationService;
-
-//    @PostMapping
-//    public ResponseEntity<String> register(@RequestBody @Valid UserRegistrationDto userDto){
-//        userService.createUser(userDto);
-//        return new ResponseEntity<>("User Created Succesfully",HttpStatus.CREATED);
-//    }
 
     @PostMapping("/step1")
     public ResponseEntity<Step1Response> step1(@RequestBody Step1Request request) {
