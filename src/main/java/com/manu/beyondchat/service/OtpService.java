@@ -15,10 +15,9 @@ public class OtpService {
         return String.valueOf(otp);
     }
     public long setTimer(){
-        long otpExpiryTime = Instant.now()
+        return Instant.now()
                 .plusMillis(Duration.ofMinutes(5)
                         .toMillis())
                         .toEpochMilli();
-        return otpExpiryTime;
     }
 }

@@ -47,20 +47,22 @@ public class RegistrationService {
         String generatedOtp = otpService.generateSecureOtp();
         long otpExpiryTime = otpService.setTimer();
 
-        String message = "Hello,\n" +
-                "\n" +
-                "Your One-Time Password (OTP) for verification is:\n" +
-                "\n" +
-                generatedOtp+"\n" +
-                "\n" +
-                "This OTP is valid for 5 minutes.\n" +
-                "Please do not share this code with anyone for security reasons.\n" +
-                "\n" +
-                "If you did not request this OTP, please ignore this email.\n" +
-                "\n" +
-                "Regards,\n" +
-                "BeyondChat\n" +
-                "Support Team";
+        String message = """
+        Hello,
+        
+        Your One-Time Password (OTP) for verification is:
+        
+        %s
+        
+        This OTP is valid for 5 minutes.
+        Please do not share this code with anyone for security reasons.
+        
+        If you did not request this OTP, please ignore this email.
+        
+        Regards,
+        BeyondChat
+        Support Team
+        """.formatted(generatedOtp);
         emailService.sendEmail(request.email(),"Your One-Time Password (OTP)",message);
 
         String registrationId = UUID.randomUUID().toString();
