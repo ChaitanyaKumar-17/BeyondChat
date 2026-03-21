@@ -18,6 +18,8 @@ import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import static com.manu.beyondchat.sql.entity.enums.UserStatus.ONLINE;
+
 @Service
 @RequiredArgsConstructor
 public class RegistrationService {
@@ -229,7 +231,7 @@ public class RegistrationService {
         dto.setPhoneNumber(context.getContactNumber());
         dto.setUsername(request.username());
         dto.setPassword(hashedPassword);
-        dto.setStatus("ONLINE");
+        dto.setStatus(ONLINE);
 
         UserEntity user = userMapper.toEntity(dto);
         userRepository.save(user);

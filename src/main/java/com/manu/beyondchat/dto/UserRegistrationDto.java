@@ -1,5 +1,6 @@
 package com.manu.beyondchat.dto;
 
+import com.manu.beyondchat.sql.entity.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -48,7 +49,7 @@ public class UserRegistrationDto {
     private String phoneNumber;
 
     @NotBlank
-    private String status;
+    private UserStatus status;
 
 
 }
