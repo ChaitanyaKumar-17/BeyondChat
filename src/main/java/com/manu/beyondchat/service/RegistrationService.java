@@ -65,7 +65,7 @@ public class RegistrationService {
         BeyondChat
         Support Team
         """.formatted(generatedOtp);
-        emailService.sendEmail(request.email(),"Your One-Time Password (OTP)",message);
+        emailService.sendNotification(request.email(),"Your One-Time Password (OTP)",message);
 
         String registrationId = UUID.randomUUID().toString();
         String redisKey = "registration:" + registrationId;
@@ -127,21 +127,23 @@ public class RegistrationService {
         // 3. Save back to Redis
         redisTemplate.opsForValue().set(redisKey, context, Duration.ofMinutes(60));
 
-        String message = "Hello,\n" +
-                "\n" +
-                "Your One-Time Password (OTP) for verification is:\n" +
-                "\n" +
-                newOtp+"\n" +
-                "\n" +
-                "This OTP is valid for 5 minutes.\n" +
-                "Please do not share this code with anyone for security reasons.\n" +
-                "\n" +
-                "If you did not request this OTP, please ignore this email.\n" +
-                "\n" +
-                "Regards,\n" +
-                "BeyondChat\n" +
-                "Support Team";
-        emailService.sendEmail(context.getEmail(), "Your One-Time Password (OTP)",message);
+        String message = """
+        Hello,
+        
+        Your One-Time Password (OTP) for verification is:
+        
+        %s
+        
+        This OTP is valid for 5 minutes.
+        Please do not share this code with anyone for security reasons.
+        
+        If you did not request this OTP, please ignore this email.
+        
+        Regards,
+        BeyondChat
+        Support Team
+        """.formatted(newOtp);
+        emailService.sendNotification(context.getEmail(), "Your One-Time Password (OTP)",message);
     }
 
     public void processStep3(Step3Request request){

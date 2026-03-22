@@ -6,6 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -38,6 +40,38 @@ public class GlobalExceptionHandler {
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler(RestClientResponseException.class)
+    public ResponseEntity<ApiErrorResponse> handleExternalApiErrors(RestClientResponseException ex) {
+
+        // Log the exact external error payload for backend debugging
+        System.err.println("Brevo API Error: " + ex.getResponseBodyAsString());
+
+        // Construct the simplified response
+        ApiErrorResponse response = new ApiErrorResponse(
+                "External Integration Error: The email delivery service rejected the request.",
+                ex.getStatusCode().value(),
+                System.currentTimeMillis()
+        );
+
+        return new ResponseEntity<>(response, ex.getStatusCode());
+    }
+
+    @ExceptionHandler(ResourceAccessException.class)
+    public ResponseEntity<ApiErrorResponse> handleNetworkTimeouts(ResourceAccessException ex) {
+
+        // Log the network failure
+        System.err.println("Network Error: Could not reach Brevo. " + ex.getMessage());
+
+        // Construct the simplified response with a 503 status
+        ApiErrorResponse response = new ApiErrorResponse(
+                "Service Unavailable: Email service is currently unreachable due to network latency.",
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                System.currentTimeMillis()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @ExceptionHandler(Exception.class)
