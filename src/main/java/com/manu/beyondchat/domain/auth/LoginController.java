@@ -23,15 +23,10 @@ public class LoginController {
 
     @PostMapping("/credentials")
     public ResponseEntity<String> step1(@RequestBody LoginRequest request) {
-        try{
-            Authentication authenticatedUser = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        Authentication authenticatedUser = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
 
-            String jwtToken = jwtUtility.generateToken(authenticatedUser.getName());
-            return ResponseEntity.ok(jwtToken);
-        }
-        catch (AuthenticationException e){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-        }
+        String jwtToken = jwtUtility.generateToken(authenticatedUser.getName());
+        return ResponseEntity.ok(jwtToken);
     }
 }
