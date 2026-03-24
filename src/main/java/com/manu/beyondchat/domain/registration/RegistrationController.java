@@ -1,5 +1,7 @@
 package com.manu.beyondchat.domain.registration;
 
+import com.manu.beyondchat.domain.auth.LoginRequest;
+import com.manu.beyondchat.domain.auth.LoginService;
 import com.manu.beyondchat.domain.registration.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +17,9 @@ public class RegistrationController {
 
     @Autowired
     private RegistrationService registrationService;
+
+    @Autowired
+    private LoginService loginService;
 
     @PostMapping("/step1")
     public ResponseEntity<Step1Response> step1(@RequestBody Step1Request request) {
@@ -41,8 +46,8 @@ public class RegistrationController {
     }
 
     @PostMapping("/final")
-    public ResponseEntity<Void> completeRegistration(@RequestBody Step4Request request) {
-        registrationService.processStep4AndComplete(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<String> completeRegistration(@RequestBody Step4Request request) {
+        LoginRequest loginRequest = registrationService.processStep4AndComplete(request);
+        return loginService.authenticate(loginRequest);
     }
 }

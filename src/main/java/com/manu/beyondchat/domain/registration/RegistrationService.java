@@ -1,5 +1,6 @@
 package com.manu.beyondchat.domain.registration;
 
+import com.manu.beyondchat.domain.auth.LoginRequest;
 import com.manu.beyondchat.domain.registration.dto.*;
 import com.manu.beyondchat.integration.email.EmailService;
 import com.manu.beyondchat.domain.user.UserMapper;
@@ -195,7 +196,7 @@ public class RegistrationService {
     }
 
     @Transactional
-    public void processStep4AndComplete(Step4Request request){
+    public LoginRequest processStep4AndComplete(Step4Request request){
         String redisKey = "registration:" + request.registrationId();
         RegistrationContext context = (RegistrationContext) redisTemplate.opsForValue().get(redisKey);
 
@@ -240,5 +241,7 @@ public class RegistrationService {
         userRepository.save(user);
 
         redisTemplate.delete(redisKey);
+
+        return new LoginRequest(request.username(), hashedPassword);
     }
 }
