@@ -9,7 +9,6 @@ spring:
     import: "optional:file:.env[.properties]"
 
   data:
-
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
@@ -18,8 +17,6 @@ spring:
         enable: true
       client-type: lettuce
 
-#    mongodb:
-#      url: mongodb://localhost:27017/beyond_chat
 
   datasource:
     url: ${SQL_URL}
