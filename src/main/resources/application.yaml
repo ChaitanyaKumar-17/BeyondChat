@@ -1,12 +1,14 @@
 spring:
+  config:
+    import: "optional:file:.env[.properties]"
+
   application:
     name: beyond-chat
+
     security:
       jwt:
         secret-key: ${KEY_256bit}
         expiration: 86400000      # 24 hours
-  config:
-    import: "optional:file:.env[.properties]"
 
   data:
     redis:
@@ -16,7 +18,6 @@ spring:
       ssl:
         enable: true
       client-type: lettuce
-
 
   datasource:
     url: ${SQL_URL}
