@@ -36,7 +36,7 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(serializer);
 
-        // Configuring Hash serializers in case you use Redis Hashes (HSET) later
+        // Configuring Hash serializers in case of using Redis Hashes (HSET) later on
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
 
