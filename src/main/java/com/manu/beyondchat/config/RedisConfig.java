@@ -21,7 +21,7 @@ public class RedisConfig {
         redisTemplate.setConnectionFactory(factory);
 
         // Tell Jackson to write the Java class name into the JSON.
-        // Without this, Redis returns a LinkedHashMap instead of your DTO!
+        // Without this, Redis returns a LinkedHashMap instead of your DTO
         PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
                 .build();
@@ -36,7 +36,7 @@ public class RedisConfig {
         redisTemplate.setKeySerializer(new StringRedisSerializer());
         redisTemplate.setValueSerializer(serializer);
 
-        // Configure Hash serializers in case you use Redis Hashes (HSET) later
+        // Configuring Hash serializers in case you use Redis Hashes (HSET) later
         redisTemplate.setHashKeySerializer(new StringRedisSerializer());
         redisTemplate.setHashValueSerializer(serializer);
 
