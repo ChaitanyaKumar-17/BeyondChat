@@ -132,7 +132,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
-    @ExceptionHandler(JwtException.class) // Catches all other JWT issues (malformed, bad signature)
+    @ExceptionHandler(JwtException.class)
     public ResponseEntity<ApiErrorResponse> handleJwtException(JwtException ex) {
 
         log.warn("Invalid JWT token: {}", ex.getMessage());
