@@ -20,6 +20,6 @@ public class LoginService {
                 new UsernamePasswordAuthenticationToken(request.username(), request.password()));
 
         String jwtToken = jwtUtility.generateToken(authenticatedUser.getName());
-        return ResponseEntity.ok(jwtToken);
+        return ResponseEntity.ok(jwtToken); // returns the JWT tokens
     }
 }
