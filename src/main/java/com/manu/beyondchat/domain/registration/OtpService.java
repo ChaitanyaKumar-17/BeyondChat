@@ -10,7 +10,7 @@ import java.time.Instant;
 public class OtpService {
     public String generateSecureOtp() {
         SecureRandom secureRandom = new SecureRandom();
-        // Generates a random number between 100000 and 999999 (for 6 digit otp)
+        // Generates a random number between 100000 and 999999 (for 6 digit OTP)
         int otp = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(otp);
     }
@@ -18,6 +18,7 @@ public class OtpService {
         return Instant.now()
                 .plusMillis(Duration.ofMinutes(5)
                         .toMillis())
-                        .toEpochMilli();
+                        .toEpochMilli(); //converts the resulting future time into a long,
+        // representing the number of milliseconds that have passed since the Unix epoch
     }
 }
