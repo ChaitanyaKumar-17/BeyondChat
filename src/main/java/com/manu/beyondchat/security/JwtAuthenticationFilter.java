@@ -46,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 3. Extract the username from the token
             final String username = jwtUtility.extractUsername(jwt);
 
-            // 4. If we have a username AND the user isn't already authenticated in this request
+            // 4. If we have a username and the user isn't already authenticated in this request
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 // Fetch the user from your database
