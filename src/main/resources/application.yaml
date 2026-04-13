@@ -8,7 +8,7 @@ spring:
     security:
       jwt:
         secret-key: ${KEY_256bit}
-        expiration: 86400000      # 24 hours
+        expiration: 86400000      # 24 hours in miliseconds
 
   data:
     redis:
