@@ -30,6 +30,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/registration/**").permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/login/credentials").permitAll()
+                        .requestMatchers("/api/login/2fa").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptions -> exceptions

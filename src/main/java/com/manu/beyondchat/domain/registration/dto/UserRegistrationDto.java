@@ -19,8 +19,7 @@ public class UserRegistrationDto {
     private String username;
 
     @NotBlank
-    @Size(min = 12, max = 64)
-    private String password;
+    private String passwordHash;
 
     @NotBlank
     @Email
@@ -46,8 +45,11 @@ public class UserRegistrationDto {
     @Size(max = 15)
     private String phoneNumber;
 
-    @NotBlank
+    @NotNull
     private UserStatus status;
+
+    @NotBlank
+    private String totpSecret;
 
 
 }

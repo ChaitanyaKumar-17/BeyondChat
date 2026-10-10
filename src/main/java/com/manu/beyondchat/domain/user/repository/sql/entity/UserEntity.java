@@ -59,5 +59,8 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatus status;
+
+    @Column(length = 512)
+    private String totpSecret;
 }
 

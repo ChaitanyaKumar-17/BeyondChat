@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
@@ -52,7 +53,7 @@ public class GlobalExceptionHandler {
         log.warn("Failed login attempt: {}", ex.getMessage());
 
         ApiErrorResponse response = new ApiErrorResponse(
-                "Invalid email or password",
+                "Invalid username or password",
                 HttpStatus.UNAUTHORIZED.value(),
                 System.currentTimeMillis()
         );
@@ -143,6 +144,27 @@ public class GlobalExceptionHandler {
                 System.currentTimeMillis()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    @ExceptionHandler({AuthSessionExpiredException.class, InvalidTwoFactorCodeException.class})
+    public ResponseEntity<ApiErrorResponse> handleTwoFactorAuthFailures(RuntimeException ex) {
+        log.warn("2FA auth failure: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiErrorResponse(
+                ex.getMessage(), HttpStatus.UNAUTHORIZED.value(), System.currentTimeMillis()));
+    }
+
+    @ExceptionHandler(TooManyAttemptsException.class)
+    public ResponseEntity<ApiErrorResponse> handleTooManyAttempts(TooManyAttemptsException ex) {
+        log.warn("Rate limit hit: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(new ApiErrorResponse(
+                ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS.value(), System.currentTimeMillis()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleUnreadableBody(HttpMessageNotReadableException ex) {
+        log.warn("Unreadable request body: {}", ex.getMessage());
+        return ResponseEntity.badRequest().body(new ApiErrorResponse(
+                "Malformed or missing request body.", HttpStatus.BAD_REQUEST.value(), System.currentTimeMillis()));
     }
 
     @ExceptionHandler(Exception.class)

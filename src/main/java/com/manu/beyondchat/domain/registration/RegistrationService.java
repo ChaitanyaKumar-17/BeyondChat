@@ -1,6 +1,6 @@
 package com.manu.beyondchat.domain.registration;
 
-import com.manu.beyondchat.domain.auth.LoginRequest;
+import com.manu.beyondchat.common.exception.TooManyAttemptsException;
 import com.manu.beyondchat.domain.registration.dto.*;
 import com.manu.beyondchat.integration.email.EmailService;
 import com.manu.beyondchat.domain.user.UserMapper;
@@ -12,6 +12,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import java.util.Set;
+import java.util.stream.Collectors;
+import com.manu.beyondchat.domain.twofactor.TotpService;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -29,6 +36,12 @@ public class RegistrationService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, Object> redisTemplate;
     private final PasswordEncoder passwordEncoder;
+    private final Validator validator;
+
+    private final TotpService totpService;
+    private final StringRedisTemplate stringRedisTemplate;
+
+    private static final int MAX_TOTP_ATTEMPTS = 5;
 
     @Autowired
     private EmailService emailService;
@@ -37,7 +50,6 @@ public class RegistrationService {
     @Autowired
     private UserMapper userMapper;
 
-    private UserRegistrationDto dto = new UserRegistrationDto();
 
     private static final Pattern PASSWORD_PATTERN = Pattern.compile(
             "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&#])[A-Za-z\\d@$!%*?&#]{12,}$"
@@ -195,8 +207,7 @@ public class RegistrationService {
         redisTemplate.opsForValue().set(redisKey, context, Duration.ofMinutes(60));
     }
 
-    @Transactional
-    public LoginRequest processStep4AndComplete(Step4Request request){
+    public Step4Response processStep4(Step4Request request){
         String redisKey = "registration:" + request.registrationId();
         RegistrationContext context = (RegistrationContext) redisTemplate.opsForValue().get(redisKey);
 
@@ -204,11 +215,11 @@ public class RegistrationService {
             throw new IllegalStateException("Registration session expired. Please start over.");
         }
         if (context.getCurrentStep() < 3) {
-            throw new IllegalStateException("You must complete previous steps before finalizing.");
+            throw new IllegalStateException("You must complete previous steps first.");
         }
 
-        if (request.username() == null || request.username().length() < 8) {
-            throw new IllegalArgumentException("Username must be at least 8 characters long.");
+        if (request.username() == null || request.username().length() < 8 || request.username().length() > 32) {
+            throw new IllegalArgumentException("Username must be between 8 and 32 characters long.");
         }
         if (userRepository.existsByUsername(request.username())) {
             throw new IllegalArgumentException("Username is already taken.");
@@ -221,7 +232,48 @@ public class RegistrationService {
             );
         }
 
-        String hashedPassword = passwordEncoder.encode(request.password());
+        TotpService.TotpSetup setup = totpService.generateSetup(context.getEmail());
+
+        context.setUsername(request.username());
+        context.setPasswordHash(passwordEncoder.encode(request.password()));
+        context.setTotpSecret(setup.encryptedSecret());   // encrypted form only
+        context.setCurrentStep(4);
+
+        redisTemplate.opsForValue().set(redisKey, context, Duration.ofMinutes(60));
+
+        return new Step4Response(setup.otpauthUri(), setup.plainSecret());
+
+    }
+
+    @Transactional
+    public String completeRegistration(Step5Request request){
+        String redisKey = "registration:" + request.registrationId();
+        RegistrationContext context = (RegistrationContext) redisTemplate.opsForValue().get(redisKey);
+
+        if (context == null) {
+            throw new IllegalStateException("Registration session expired. Please start over.");
+        }
+        if (context.getCurrentStep() < 4 || context.getTotpSecret() == null) {
+            throw new IllegalStateException("You must complete previous steps first.");
+        }
+
+        // Atomic attempt counter (INCR), so parallel guesses can't bypass the limit
+        String attemptsKey = "registration:attempts:" + request.registrationId();
+        Long attempts = stringRedisTemplate.opsForValue().increment(attemptsKey);
+        if (attempts != null && attempts == 1) {
+            stringRedisTemplate.expire(attemptsKey, Duration.ofMinutes(60));
+        }
+        if (attempts != null && attempts > MAX_TOTP_ATTEMPTS) {
+            redisTemplate.delete(redisKey);
+            stringRedisTemplate.delete(attemptsKey);
+            throw new TooManyAttemptsException("Too many invalid codes. Please start over.");
+        }
+
+        if (!totpService.verify(context.getTotpSecret(), request.code())) {
+            throw new IllegalArgumentException("Invalid authenticator code.");
+        }
+
+        UserRegistrationDto dto = new UserRegistrationDto();
 
         dto.setFirstName(context.getFirstName());
         dto.setLastName(context.getLastName());
@@ -233,15 +285,31 @@ public class RegistrationService {
         dto.setEmail(context.getEmail());
         dto.setCountryCode(context.getCountryCode());
         dto.setPhoneNumber(context.getContactNumber());
-        dto.setUsername(request.username());
-        dto.setPassword(hashedPassword);
+        dto.setUsername(context.getUsername());
+        dto.setPasswordHash(context.getPasswordHash());
+        dto.setTotpSecret(context.getTotpSecret());
         dto.setStatus(ONLINE);
 
-        UserEntity user = userMapper.toEntity(dto);
-        userRepository.save(user);
+        Set<ConstraintViolation<UserRegistrationDto>> violations = validator.validate(dto);
+        if (!violations.isEmpty()) {
+            String message = violations.stream()
+                    .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+            throw new IllegalArgumentException("Invalid registration data: " + message);
+        }
+
+        try {
+            userRepository.save(userMapper.toEntity(dto));
+        } catch (DataIntegrityViolationException e) {
+            // Someone took the username/email/phone between Step 4 and now
+            throw new IllegalArgumentException(
+                    "Username, email or phone number was just taken. Please go back and choose different details.");
+        }
 
         redisTemplate.delete(redisKey);
+        stringRedisTemplate.delete(attemptsKey);
 
-        return new LoginRequest(request.username(), hashedPassword);
+        return context.getUsername();
     }
 }

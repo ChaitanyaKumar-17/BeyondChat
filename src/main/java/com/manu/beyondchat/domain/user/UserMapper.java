@@ -9,6 +9,5 @@ import org.mapstruct.Mapping;
 public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "password", target = "passwordHash")
     UserEntity toEntity(UserRegistrationDto dto);
 }

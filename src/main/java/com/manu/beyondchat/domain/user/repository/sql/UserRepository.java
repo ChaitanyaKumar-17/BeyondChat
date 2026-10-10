@@ -19,4 +19,7 @@ public interface UserRepository extends JpaRepository<UserEntity,String> {
     @Query("SELECT new com.manu.beyondchat.domain.auth.UserAuthView(u.id, u.username, u.passwordHash) " +
             "FROM UserEntity u WHERE u.username = :username")
     Optional<UserAuthView> findAuthInfoByUsername(@Param("username") String username);
+
+    @Query("select u.totpSecret from UserEntity u where u.username = :username")
+    Optional<String> findTotpSecretByUsername(@Param("username") String username);
 }

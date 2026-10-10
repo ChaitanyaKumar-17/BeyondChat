@@ -15,7 +15,12 @@ public class LoginController {
     private LoginService loginService;
 
     @PostMapping("/credentials")
-    public ResponseEntity<String> step1(@RequestBody LoginRequest request) {
-        return loginService.authenticate(request);
+    public ResponseEntity<LoginStepOneResponse> credentials(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(loginService.authenticate(request));
+    }
+
+    @PostMapping("/2fa")
+    public ResponseEntity<String> verifyTwoFactor(@RequestBody TwoFactorVerifyRequest request) {
+        return ResponseEntity.ok(loginService.verifyTwoFactor(request));
     }
 }

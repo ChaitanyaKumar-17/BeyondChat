@@ -1,6 +1,5 @@
 package com.manu.beyondchat.domain.registration;
 
-import com.manu.beyondchat.domain.auth.LoginRequest;
 import com.manu.beyondchat.domain.auth.LoginService;
 import com.manu.beyondchat.domain.registration.dto.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,9 +44,16 @@ public class RegistrationController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/step4")
+    public ResponseEntity<Step4Response> step4(@RequestBody Step4Request request) {
+        return ResponseEntity.ok()
+                .header("Cache-Control", "no-store")   // response contains the TOTP secret
+                .body(registrationService.processStep4(request));
+    }
+
     @PostMapping("/final")
-    public ResponseEntity<String> completeRegistration(@RequestBody Step4Request request) {
-        LoginRequest loginRequest = registrationService.processStep4AndComplete(request);
-        return loginService.authenticate(loginRequest);
+    public ResponseEntity<String> completeRegistration(@RequestBody Step5Request request) {
+        String username = registrationService.completeRegistration(request);
+        return ResponseEntity.ok(loginService.issueToken(username));
     }
 }

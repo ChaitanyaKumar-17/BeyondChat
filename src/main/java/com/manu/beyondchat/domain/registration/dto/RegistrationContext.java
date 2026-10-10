@@ -22,6 +22,10 @@ public class RegistrationContext implements Serializable {
     private String countryCode;
     private String contactNumber;
     private String dateOfBirth;
+    private String username;
+    private String passwordHash;
+    private String totpSecret;
+    private int totpAttempts;
 
     public RegistrationContext(String registrationId, String email, String otp, long otpExpiryTime, int currentStep) {
         this.registrationId = registrationId;

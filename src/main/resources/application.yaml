@@ -10,6 +10,9 @@ spring:
         secret-key: ${KEY_256bit}
         expiration: 86400000      # 24 hours in miliseconds
 
+      totp:
+        encryption-key: ${TOTP_ENCRYPTION_KEY}
+
   data:
     redis:
       host: ${REDIS_HOST}
